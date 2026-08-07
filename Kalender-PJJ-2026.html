@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kalender Jadwal Multi-Mapel PJJ</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+  <style>
+    :root,[data-theme="light"]{--text-xs:clamp(.75rem,.7rem + .25vw,.875rem);--text-sm:clamp(.875rem,.8rem + .35vw,1rem);--text-base:clamp(1rem,.95rem + .25vw,1.125rem);--text-lg:clamp(1.125rem,1rem + .75vw,1.5rem);--text-xl:clamp(1.5rem,1.2rem + 1.25vw,2.25rem);--space-2:.5rem;--space-3:.75rem;--space-4:1rem;--space-5:1.25rem;--space-6:1.5rem;--space-8:2rem;--color-bg:#F5F7FB;--color-surface:#ffffff;--color-surface-2:#ffffff;--color-surface-offset:#EAF0FB;--color-border:#D8DEE9;--color-text:#1C2333;--color-text-muted:#5B6577;--color-primary:#001D62;--color-primary-tint:rgba(0,29,98,.06);--color-accent:#F9A703;--color-text-inverse:#ffffff;--color-warning:#6b5000;--color-warning-bg:#FFF3CD;--color-ok:#001D62;--color-ok-bg:#EAF0FB;--shadow-sm:0 1px 2px rgba(0,0,0,.06);--radius-md:7px;--radius-lg:9px;--radius-xl:12px;--font-body:Calibri,"Segoe UI",Arial,sans-serif}
+    [data-theme="dark"]{--color-bg:#12151c;--color-surface:#1b212f;--color-surface-2:#1b212f;--color-surface-offset:#232c42;--color-border:#333b4f;--color-text:#e7e9f0;--color-text-muted:#9aa3b8;--color-primary:#5b8fe0;--color-primary-tint:rgba(91,143,224,.14);--color-accent:#f9a703;--color-text-inverse:#0b1220;--color-warning:#ffd876;--color-warning-bg:#3a2e10;--color-ok:#8fc0ff;--color-ok-bg:#1c2b46}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:var(--font-body);font-size:var(--text-base);background:var(--color-bg);color:var(--color-text);line-height:1.5}
+    .app{max-width:1480px;margin:0 auto;padding:var(--space-6) var(--space-6) 8rem}
+    header.top{background:var(--color-primary);color:#fff;border-radius:var(--radius-xl);padding:26px 30px;margin-bottom:22px;box-shadow:0 6px 18px rgba(0,29,98,.18);break-inside:avoid;page-break-inside:avoid}
+    header.top .top-inner{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-4);flex-wrap:wrap}
+    header.top h1{margin:0 0 6px;font-size:22px;color:#fff}
+    header.top p.lead{margin:0;color:#CBD5E8;font-size:14px}
+    header.top .bar{height:4px;background:var(--color-accent);border-radius:2px;margin-top:16px}
+    .top-utils{display:flex;gap:8px;flex-wrap:wrap}
+    #exportRoot.exporting .top-utils{display:none}
+    .util-btn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:.5rem .95rem;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+    .util-btn:hover{background:rgba(255,255,255,.26)}
+    .modal-overlay{position:fixed;inset:0;background:rgba(10,15,30,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+    .modal-overlay.show{display:flex}
+    .modal-box{background:var(--color-surface);border-radius:var(--radius-xl);max-width:640px;width:100%;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+    .modal-head{background:var(--color-primary);color:#fff;padding:20px 24px;position:relative}
+    .modal-head h3{margin:0 0 4px;font-size:18px}
+    .modal-head p{margin:0;font-size:13px;color:#CBD5E8}
+    .modal-head .bar{height:4px;background:var(--color-accent);border-radius:2px;margin-top:14px}
+    .modal-close{position:absolute;top:14px;right:16px;background:rgba(255,255,255,.16);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;line-height:1}
+    .modal-close:hover{background:rgba(255,255,255,.3)}
+    .modal-body{padding:20px 24px;overflow-y:auto;color:var(--color-text)}
+    .modal-body ol{margin:0;padding-left:1.2rem;display:grid;gap:12px}
+    .modal-body li strong{color:var(--color-primary)}
+    .modal-body .modal-note{background:var(--color-warning-bg);color:var(--color-warning);border-left:4px solid var(--color-accent);border-radius:var(--radius-md);padding:10px 12px;font-size:12.5px;margin-top:16px}
+    .panel{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);padding:1.4rem 1.5rem;margin-top:var(--space-5);break-inside:avoid;page-break-inside:avoid}
+    .panel:first-of-type{margin-top:0}
+    .panel h2{font-size:16px;color:var(--color-primary);margin:0 0 14px;padding-bottom:10px;border-bottom:3px solid var(--color-accent)}
+    .subgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4)}
+    label{display:block;font-size:12.5px;font-weight:700;color:var(--color-text-muted);margin-bottom:.35rem}
+    input,select,textarea{width:100%;font-family:inherit;padding:.8rem .9rem;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface-2);color:var(--color-text)}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px var(--color-surface-offset)}
+    textarea{min-height:60px;resize:vertical;white-space:pre-wrap}
+    table{width:100%;border-collapse:collapse;font-size:var(--text-sm)}
+    th,td{border:1px solid var(--color-border);padding:.65rem;vertical-align:top}
+    th{background:var(--color-surface-offset);color:var(--color-primary);text-align:left;font-weight:700}
+    .table-wrap{overflow:auto}
+    .muted{color:var(--color-text-muted);font-size:var(--text-sm)}
+    .summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-4);margin-top:var(--space-4)}
+    .kpi{padding:var(--space-4);border-radius:var(--radius-lg);background:var(--color-surface-offset);border:1px solid var(--color-border)}
+    .kpi .label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--color-text-muted)}
+    .kpi .value{font-size:var(--text-lg);font-weight:700;margin-top:.2rem;color:var(--color-primary)}
+    .alert{border-radius:var(--radius-lg);padding:var(--space-4);margin-bottom:var(--space-4);border-left:4px solid transparent}
+    .alert.warn{background:var(--color-warning-bg);color:var(--color-warning);border-left-color:var(--color-accent)}
+    .alert.ok{background:var(--color-ok-bg);color:var(--color-ok);border-left-color:var(--color-primary)}
+    .calendar-shell{display:grid;gap:var(--space-5)}
+    .week-card{border:1px solid var(--color-border);border-radius:var(--radius-xl);overflow:hidden;background:var(--color-surface-offset);break-inside:avoid;page-break-inside:avoid}
+    .week-head{display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);padding:var(--space-4);background:var(--color-surface-offset);border-bottom:1px solid var(--color-border);flex-wrap:wrap}
+    .week-title{font-weight:700;color:var(--color-primary)}
+    .week-meta{font-size:var(--text-xs);color:var(--color-text-muted)}
+    .calendar-grid{display:grid;grid-template-columns:repeat(6,minmax(180px,1fr));min-height:260px;background:var(--color-surface)}
+    .day-col{border-right:1px solid var(--color-border);display:flex;flex-direction:column}
+    .day-col:last-child{border-right:none}
+    .day-head{padding:var(--space-3);font-weight:700;background:var(--color-primary-tint);border-bottom:1px solid var(--color-border)}
+    .day-body{padding:var(--space-3);display:grid;gap:var(--space-3);align-content:start;min-height:180px}
+    .event{padding:var(--space-3);border-radius:var(--radius-lg);border:1px solid var(--color-border);background:var(--color-surface)}
+    .event.sync{border-left:4px solid var(--color-primary)}
+    .event.async{border-left:4px solid var(--color-accent)}
+    .event-title{font-weight:700;margin-bottom:.25rem}
+    .event-meta{font-size:var(--text-xs);color:var(--color-text-muted)}
+    .pill{display:inline-block;padding:.2rem .55rem;border-radius:999px;background:var(--color-surface-offset);border:1px solid var(--color-border);font-size:var(--text-xs);margin-bottom:.35rem}
+    .panel-head-print{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap}
+    .panel-head-print h2{margin:0;padding:0;border:none}
+    .print-only{display:none}
+    .print-only.print-only-active{display:block;font-weight:700}
+    .actions{position:sticky;bottom:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;background:rgba(255,255,255,.92);backdrop-filter:blur(4px);padding:14px;border-radius:14px;box-shadow:0 6px 22px rgba(0,29,98,.18);border:1px solid var(--color-border);margin-top:20px}
+    [data-theme="dark"] .actions{background:rgba(27,33,47,.92)}
+    .btn{border:none;border-radius:var(--radius-lg);padding:12px 18px;font-size:13px;font-weight:700;cursor:pointer}
+    .btn-primary{background:var(--color-primary);color:#fff}
+    .btn-primary:hover{background:#0A2C7A}
+    .btn-ghost{background:var(--color-surface);color:var(--color-primary);border:1.5px solid var(--color-primary)}
+    .btn-ghost:hover{background:var(--color-surface-offset)}
+    .btn-example{background:var(--color-accent);color:#412402}
+    .btn-example:hover{background:#E39602}
+    @media (max-width:1200px){.subgrid,.summary{grid-template-columns:1fr 1fr}.calendar-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    @media (max-width:760px){.subgrid,.summary,.calendar-grid{grid-template-columns:1fr}}
+    @media print {header.top .top-utils,.actions{display:none!important} body{background:#fff}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <div id="exportRoot">
+    <header class="top">
+      <div class="top-inner">
+        <div>
+          <h1>Kalender Jadwal Multi-Mapel PJJ</h1>
+          <p class="lead">Menjadwalkan beberapa mata pelajaran sekaligus dari data sinkron dan asinkron per minggu.</p>
+        </div>
+        <div class="top-utils">
+          <button type="button" class="util-btn" id="openGuide">📘 Panduan</button>
+          <a href="<?= baseUrl ?>" style="text-decoration:none"><button type="button" class="util-btn">← Beranda</button></a>
+          <button type="button" class="util-btn" data-theme-toggle>Mode Gelap/Terang</button>
+        </div>
+      </div>
+      <div class="bar"></div>
+    </header>
+
+    <section class="panel">
+      <h2>Data Dasar</h2>
+      <div class="subgrid">
+        <div><label>Satuan Pendidikan</label><input id="school"></div>
+        <div><label>Fase/Kelas</label>
+          <select id="grade">
+            <option value="">— Pilih Fase/Kelas —</option>
+            <option value="Fase E / Kelas X">Fase E / Kelas X</option>
+            <option value="Fase F / Kelas XI">Fase F / Kelas XI</option>
+            <option value="Fase F / Kelas XII">Fase F / Kelas XII</option>
+          </select>
+        </div>
+        <div><label>Semester</label>
+          <select id="semester">
+            <option value="">— Pilih Semester —</option>
+            <option value="Ganjil">Ganjil</option>
+            <option value="Genap">Genap</option>
+          </select>
+        </div>
+        <div><label>Tahun Ajaran</label><input id="year"></div>
+        <div><label>Wali/Koordinator</label><input id="coord"></div>
+        <div><label>Keterangan Umum</label><input id="notes"></div>
+      </div>
+      <datalist id="mapelList">
+        <option value="Pendidikan Agama dan Budi Pekerti">
+        <option value="Pendidikan Pancasila">
+        <option value="Bahasa Indonesia">
+        <option value="Matematika">
+        <option value="Bahasa Inggris">
+        <option value="Pendidikan Jasmani, Olahraga, dan Kesehatan">
+        <option value="Sejarah">
+        <option value="Seni Budaya">
+        <option value="Muatan Lokal">
+        <option value="Fisika">
+        <option value="Kimia">
+        <option value="Biologi">
+        <option value="Sosiologi">
+        <option value="Ekonomi">
+        <option value="Geografi">
+        <option value="Antropologi">
+        <option value="Bahasa Arab">
+        <option value="Bahasa Mandarin">
+        <option value="Bahasa Jepang">
+        <option value="Bahasa Korea">
+        <option value="Bahasa Jerman">
+        <option value="Bahasa Prancis">
+        <option value="Informatika">
+        <option value="Prakarya dan Kewirausahaan">
+      </datalist>
+      <div class="summary">
+        <div class="kpi"><div class="label">Baris Jadwal</div><div class="value" id="kpiRows">0</div></div>
+        <div class="kpi"><div class="label">Jumlah Minggu</div><div class="value" id="kpiWeeks">0</div></div>
+        <div class="kpi"><div class="label">Total JP Sinkron</div><div class="value" id="kpiSync">0</div></div>
+        <div class="kpi"><div class="label">Total JP Asinkron</div><div class="value" id="kpiAsync">0</div></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Input Jadwal Multi-Mapel per Minggu</h2>
+      <div id="inputAlert"></div>
+      <p class="muted">Tambahkan beberapa mata pelajaran. Setiap baris mewakili satu mata pelajaran pada minggu tertentu dengan penentuan hari dan jam sinkron, serta hari asinkron.</p>
+      <div class="table-wrap">
+        <table id="sourceTable">
+          <thead><tr><th>Minggu</th><th>Mata Pelajaran</th><th>Guru</th><th>Unit/Topik</th><th>JP Sinkron</th><th>Hari Sinkron</th><th>Jam Sinkron</th><th>JP Asinkron</th><th>Hari Asinkron</th><th>Catatan</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" id="calendarPanel">
+      <div class="panel-head-print">
+        <h2>Kalender Jadwal</h2>
+        <div class="muted print-only" id="calendarPrintMeta"></div>
+      </div>
+      <div id="calendarAlert"></div>
+      <div id="calendarWrap" class="calendar-shell"></div>
+    </section>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="btn btn-example" id="fillDemo">Isi Contoh</button>
+    <button type="button" class="btn btn-ghost" id="addRow">+ Tambah Baris</button>
+    <button type="button" class="btn btn-ghost" id="importPemetaan">⇪ Impor dari Pemetaan JP</button>
+    <button type="button" class="btn btn-ghost" id="buildCalendar">Bangun Kalender</button>
+    <button type="button" class="btn btn-ghost" id="exportExcel">Ekspor Excel</button>
+    <button type="button" class="btn btn-ghost" id="exportPdf">Ekspor PDF Lengkap</button>
+    <button type="button" class="btn btn-primary" id="printCalendarPdf">🖨️ Cetak PDF Kalender</button>
+  </div>
+  <input type="file" id="importPemetaanInput" accept="application/json" style="display:none">
+</div>
+
+<div class="modal-overlay" id="guideModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <button type="button" class="modal-close" id="closeGuide">✕</button>
+      <h3>Panduan Singkat Pengisian</h3>
+      <p>Kalender Jadwal Multi-Mapel PJJ — untuk Bagian Kurikulum</p>
+      <div class="bar"></div>
+    </div>
+    <div class="modal-body">
+      <ol>
+        <li><strong>Isi Data Dasar.</strong> Masukkan satuan pendidikan, fase/kelas, semester, tahun ajaran, dan wali/koordinator pada panel paling atas.</li>
+        <li><strong>Tambahkan baris jadwal</strong> dengan dua cara: klik "+ Tambah Baris" untuk isi manual per mata pelajaran, atau klik "⇪ Impor dari Pemetaan JP" untuk memuat file yang dikirim guru dari aplikasi Pemetaan/Analisis JP (mapel, guru, topik, dan JP sinkron/asinkron akan terisi otomatis).</li>
+        <li><strong>Lengkapi hari & jam.</strong> Untuk tiap baris, pastikan hari sinkron, jam sinkron, dan hari asinkron sudah terisi — terutama baris hasil impor yang harinya masih default dan perlu disesuaikan agar tidak bentrok antar-mapel.</li>
+        <li><strong>Periksa kotak peringatan</strong> di atas tabel input untuk melihat baris yang mata pelajaran atau jam sinkronnya masih kosong.</li>
+        <li><strong>Klik "Bangun Kalender"</strong> untuk menyusun seluruh baris menjadi tampilan kalender mingguan per hari.</li>
+        <li><strong>Cetak/ekspor hasil.</strong> Gunakan "🖨️ Cetak PDF Kalender" untuk mengunduh hanya bagian kalender, "Ekspor PDF Lengkap" untuk menyertakan data dasar dan tabel input, atau "Ekspor Excel" untuk data mentah.</li>
+      </ol>
+      <div class="modal-note">Hasil impor dari Pemetaan JP hanya membawa mapel, guru, topik, dan JP — hari & jam tetap perlu diisi manual agar tidak bentrok dengan mapel lain.</div>
+    </div>
+  </div>
+</div>
+<script>
+const el=id=>document.getElementById(id), sourceBody=document.querySelector('#sourceTable tbody'), calendarWrap=el('calendarWrap');
+const dayOptions=['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+let currentTheme=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; document.documentElement.setAttribute('data-theme',currentTheme);
+document.querySelector('[data-theme-toggle]').addEventListener('click',()=>{currentTheme=currentTheme==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',currentTheme)});
+function round(n){return Math.round(Number(n)||0)}
+function daySelect(cls,val='Senin'){return `<select class="${cls}">${dayOptions.map(d=>`<option value="${d}" ${d===val?'selected':''}>${d}</option>`).join('')}</select>`}
+function addRow(data={}){const tr=document.createElement('tr'); tr.innerHTML=`<td><input class="week-no" type="number" min="1" value="${data.week||1}"></td><td><input class="subject" list="mapelList" value="${data.subject||''}" placeholder="Mata pelajaran"></td><td><input class="teacher" value="${data.teacher||''}" placeholder="Guru"></td><td><input class="unit" value="${data.unit||''}" placeholder="Unit/topik"></td><td><input class="sync-jp" type="number" min="0" value="${data.sync||0}"></td><td>${daySelect('sync-day',data.syncDay||'Senin')}</td><td><input class="sync-time" value="${data.syncTime||''}" placeholder="07.30-09.00"></td><td><input class="async-jp" type="number" min="0" value="${data.async||0}"></td><td>${daySelect('async-day',data.asyncDay||'Rabu')}</td><td><input class="row-notes" value="${data.notes||''}" placeholder="Catatan"></td>`; sourceBody.appendChild(tr); tr.querySelectorAll('input,select').forEach(i=>i.addEventListener('input',refreshSummary)); refreshSummary();}
+function getRows(){return [...sourceBody.querySelectorAll('tr')].map(tr=>({week:round(tr.querySelector('.week-no').value),subject:tr.querySelector('.subject').value||'',teacher:tr.querySelector('.teacher').value||'',unit:tr.querySelector('.unit').value||'',sync:round(tr.querySelector('.sync-jp').value),syncDay:tr.querySelector('.sync-day').value,syncTime:tr.querySelector('.sync-time').value||'',async:round(tr.querySelector('.async-jp').value),asyncDay:tr.querySelector('.async-day').value,notes:tr.querySelector('.row-notes').value||''})).filter(r=>r.week>0).sort((a,b)=>a.week-b.week || a.subject.localeCompare(b.subject));}
+function refreshSummary(){const rows=getRows(); const weeks=[...new Set(rows.map(r=>r.week))]; el('kpiRows').textContent=rows.length; el('kpiWeeks').textContent=weeks.length; el('kpiSync').textContent=rows.reduce((a,b)=>a+b.sync,0); el('kpiAsync').textContent=rows.reduce((a,b)=>a+b.async,0); const problems=[]; rows.forEach((r,idx)=>{if(!r.subject.trim()) problems.push(`Baris ${idx+1}: mata pelajaran masih kosong.`); if(r.sync>0 && !r.syncTime.trim()) problems.push(`Minggu ${r.week} ${r.subject||'(mapel kosong)'}: jam sinkron belum diisi.`);}); el('inputAlert').innerHTML=problems.length?`<div class="alert warn"><strong>Periksa input jadwal</strong><ul>${problems.map(p=>`<li>${p}</li>`).join('')}</ul></div>`:`<div class="alert ok"><strong>Input multi-mapel siap dibentuk menjadi kalender.</strong></div>`;}
+function buildCalendar(){const rows=getRows(); calendarWrap.innerHTML=''; if(!rows.length){el('calendarAlert').innerHTML='<div class="alert warn"><strong>Belum ada data jadwal untuk ditampilkan.</strong></div>'; return;} const byWeek={}; rows.forEach(r=>{if(!byWeek[r.week]) byWeek[r.week]=[]; byWeek[r.week].push(r)}); el('calendarAlert').innerHTML='<div class="alert ok"><strong>Kalender berhasil dibentuk dalam tampilan mingguan seperti kalender pada umumnya.</strong></div>'; Object.keys(byWeek).sort((a,b)=>a-b).forEach(week=>{const card=document.createElement('section'); card.className='week-card'; const weekRows=byWeek[week]; const total=weekRows.reduce((a,b)=>a+b.sync+b.async,0); card.innerHTML=`<div class="week-head"><div><div class="week-title">Minggu ${week}</div><div class="week-meta">${el('school').value||'Satuan pendidikan'} · ${el('grade').value||'Fase/Kelas'} · ${el('semester').value||'Semester'}</div></div><div class="week-meta">${weekRows.length} mapel · ${total} JP</div></div>`; const grid=document.createElement('div'); grid.className='calendar-grid'; dayOptions.forEach(day=>{const dayCol=document.createElement('div'); dayCol.className='day-col'; dayCol.innerHTML=`<div class="day-head">${day}</div><div class="day-body"></div>`; const body=dayCol.querySelector('.day-body'); const syncEvents=weekRows.filter(r=>r.sync>0 && r.syncDay===day); const asyncEvents=weekRows.filter(r=>r.async>0 && r.asyncDay===day); if(!syncEvents.length && !asyncEvents.length){body.innerHTML='<div class="event"><div class="event-meta">Tidak ada jadwal</div></div>';} syncEvents.forEach(r=>{const ev=document.createElement('div'); ev.className='event sync'; ev.innerHTML=`<div class="pill">Sinkron · ${r.sync} JP</div><div class="event-title">${r.subject}</div><div class="event-meta">${r.syncTime || '-'} · ${r.teacher || 'Guru belum diisi'}</div><div class="event-meta">${r.unit || '-'}</div>`; body.appendChild(ev);}); asyncEvents.forEach(r=>{const ev=document.createElement('div'); ev.className='event async'; ev.innerHTML=`<div class="pill">Asinkron · ${r.async} JP</div><div class="event-title">${r.subject}</div><div class="event-meta">Penugasan mandiri · ${r.teacher || 'Guru belum diisi'}</div><div class="event-meta">${r.unit || '-'}</div>`; body.appendChild(ev);}); grid.appendChild(dayCol);}); card.appendChild(grid); calendarWrap.appendChild(card);});}
+function fillDemo(){el('school').value='SMA Contoh Nusantara'; el('grade').value='Fase E / Kelas X'; el('semester').value='Ganjil'; el('year').value='2026/2027'; el('coord').value='Waka Kurikulum'; el('notes').value='Simulasi kalender PJJ lintas mapel'; sourceBody.innerHTML=''; addRow({week:1,subject:'Matematika',teacher:'Ibu Rani',unit:'Eksponen',sync:2,syncDay:'Senin',syncTime:'07.30-09.00',async:2,asyncDay:'Rabu',notes:'LKPD 1'}); addRow({week:1,subject:'Bahasa Indonesia',teacher:'Pak Dimas',unit:'Teks Eksposisi',sync:2,syncDay:'Selasa',syncTime:'08.15-09.45',async:1,asyncDay:'Kamis',notes:'Membaca mandiri'}); addRow({week:1,subject:'Biologi',teacher:'Bu Sinta',unit:'Keanekaragaman Hayati',sync:1,syncDay:'Jumat',syncTime:'10.15-11.00',async:2,asyncDay:'Sabtu',notes:'Video observasi'}); addRow({week:2,subject:'Matematika',teacher:'Ibu Rani',unit:'Barisan Aritmetika',sync:2,syncDay:'Senin',syncTime:'07.30-09.00',async:2,asyncDay:'Kamis'}); addRow({week:2,subject:'Bahasa Indonesia',teacher:'Pak Dimas',unit:'Analisis Struktur Teks',sync:1,syncDay:'Rabu',syncTime:'09.30-10.15',async:2,asyncDay:'Jumat'}); addRow({week:2,subject:'Biologi',teacher:'Bu Sinta',unit:'Klasifikasi Makhluk Hidup',sync:2,syncDay:'Selasa',syncTime:'10.15-11.45',async:1,asyncDay:'Sabtu'}); buildCalendar();}
+function exportExcel(){const rows=getRows(); const wb=XLSX.utils.book_new(); const meta=[['Data Dasar',''],['Satuan Pendidikan',el('school').value||''],['Fase/Kelas',el('grade').value||''],['Semester',el('semester').value||''],['Tahun Ajaran',el('year').value||''],['Wali/Koordinator',el('coord').value||''],['Keterangan Umum',el('notes').value||'']]; XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(meta),'Data Dasar'); const detail=[['Minggu','Mata Pelajaran','Guru','Unit/Topik','JP Sinkron','Hari Sinkron','Jam Sinkron','JP Asinkron','Hari Asinkron','Catatan']]; rows.forEach(r=>detail.push([r.week,r.subject,r.teacher,r.unit,r.sync,r.syncDay,r.syncTime,r.async,r.asyncDay,r.notes])); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(detail),'Jadwal'); XLSX.writeFile(wb,`kalender-jadwal-multi-mapel.xlsx`);}
+async function exportPDF(){
+  if(typeof html2pdf==='undefined'){ alert('Pustaka PDF belum termuat. Periksa koneksi internet Anda, lalu muat ulang halaman.'); return; }
+  const btn=el('exportPdf'); const originalLabel=btn.textContent; btn.textContent='Menyiapkan PDF…'; btn.disabled=true;
+  const node=document.getElementById('exportRoot');
+  window.scrollTo(0,0);
+  node.classList.add('exporting');
+  try{
+    await html2pdf().set({margin:8,filename:'kalender-jadwal-multi-mapel.pdf',image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true,scrollX:0,scrollY:0},jsPDF:{unit:'mm',format:'a3',orientation:'landscape'},pagebreak:{mode:['css','legacy']}}).from(node).save();
+  }catch(err){
+    console.error(err); alert('Gagal membuat PDF: '+(err && err.message ? err.message : 'kesalahan tidak diketahui'));
+  }finally{
+    node.classList.remove('exporting');
+    btn.textContent=originalLabel; btn.disabled=false;
+  }
+}
+async function printCalendarPDF(){
+  if(typeof html2pdf==='undefined'){ alert('Pustaka PDF belum termuat. Periksa koneksi internet Anda, lalu muat ulang halaman.'); return; }
+  const rows=getRows();
+  if(!rows.length || !calendarWrap.children.length){ el('calendarAlert').innerHTML='<div class="alert warn"><strong>Bangun kalender terlebih dahulu sebelum mencetak PDF.</strong></div>'; buildCalendar(); if(!calendarWrap.children.length) return; }
+  const meta=el('calendarPrintMeta');
+  const parts=[el('school').value,el('grade').value,el('semester').value,el('year').value?`TA ${el('year').value}`:'',el('coord').value].filter(Boolean);
+  meta.textContent=parts.join(' · ');
+  meta.classList.add('print-only-active');
+  const btn=el('printCalendarPdf'); const originalLabel=btn.textContent; btn.textContent='Menyiapkan PDF…'; btn.disabled=true;
+  window.scrollTo(0,0);
+  try{
+    await html2pdf().set({
+      margin:8,
+      filename:'kalender-jadwal-pjj.pdf',
+      image:{type:'jpeg',quality:.98},
+      html2canvas:{scale:2,useCORS:true,scrollX:0,scrollY:0},
+      jsPDF:{unit:'mm',format:'a3',orientation:'landscape'},
+      pagebreak:{mode:['css','legacy'],avoid:'.week-card'}
+    }).from(el('calendarPanel')).save();
+  }catch(err){
+    console.error(err); alert('Gagal membuat PDF: '+(err && err.message ? err.message : 'kesalahan tidak diketahui'));
+  } finally {
+    meta.classList.remove('print-only-active');
+    btn.textContent=originalLabel; btn.disabled=false;
+  }
+}
+async function importFromPemetaan(file){
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if(!data || data.type!=='pemetaan-to-kalender' || !Array.isArray(data.rows)){
+      alert('File tidak dikenali sebagai data ekspor dari Pemetaan JP.');
+      return;
+    }
+    data.rows.forEach(r=>{
+      addRow({week:r.week||1, subject:data.subject||'', teacher:data.teacher||'', unit:r.unit||'', sync:r.sync||0, syncDay:'Senin', syncTime:'', async:r.async||0, asyncDay:'Rabu', notes:''});
+    });
+    buildCalendar();
+    alert(`${data.rows.length} baris jadwal untuk "${data.subject||'mapel'}" berhasil diimpor. Silakan lengkapi hari & jam sinkron untuk tiap baris.`);
+  }catch(err){
+    console.error(err);
+    alert('Gagal membaca file impor: '+(err && err.message ? err.message : 'format tidak valid'));
+  }
+}
+function openGuide(){ el('guideModal').classList.add('show'); }
+function closeGuide(){ el('guideModal').classList.remove('show'); }
+document.getElementById('openGuide').addEventListener('click', openGuide);
+document.getElementById('closeGuide').addEventListener('click', closeGuide);
+document.getElementById('guideModal').addEventListener('click',(e)=>{ if(e.target.id==='guideModal') closeGuide(); });
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeGuide(); });
+document.getElementById('addRow').addEventListener('click',()=>addRow({week:[...sourceBody.querySelectorAll('tr')].length+1})); document.getElementById('fillDemo').addEventListener('click',fillDemo); document.getElementById('buildCalendar').addEventListener('click',buildCalendar); document.getElementById('exportExcel').addEventListener('click',exportExcel); document.getElementById('exportPdf').addEventListener('click',exportPDF); document.getElementById('printCalendarPdf').addEventListener('click',printCalendarPDF); document.getElementById('importPemetaan').addEventListener('click',()=>document.getElementById('importPemetaanInput').click()); document.getElementById('importPemetaanInput').addEventListener('change',(e)=>{ const f=e.target.files[0]; if(f) importFromPemetaan(f); e.target.value=''; }); ['school','grade','semester','year','coord','notes'].forEach(id=>{el(id).addEventListener('input',buildCalendar); el(id).addEventListener('change',buildCalendar);}); addRow({week:1}); addRow({week:1}); addRow({week:2}); refreshSummary();
+</script>
+</body>
+</html>

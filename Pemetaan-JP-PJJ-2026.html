@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analisis JP PJJ</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    :root,[data-theme="light"]{--text-xs:clamp(.75rem,.7rem + .25vw,.875rem);--text-sm:clamp(.875rem,.8rem + .35vw,1rem);--text-base:clamp(1rem,.95rem + .25vw,1.125rem);--text-lg:clamp(1.125rem,1rem + .75vw,1.5rem);--text-xl:clamp(1.5rem,1.2rem + 1.25vw,2.25rem);--space-2:.5rem;--space-3:.75rem;--space-4:1rem;--space-5:1.25rem;--space-6:1.5rem;--space-8:2rem;--color-bg:#F5F7FB;--color-surface:#ffffff;--color-surface-2:#ffffff;--color-surface-offset:#EAF0FB;--color-border:#D8DEE9;--color-text:#1C2333;--color-text-muted:#5B6577;--color-primary:#001D62;--color-accent:#F9A703;--color-text-inverse:#ffffff;--color-warning:#6b5000;--color-warning-bg:#FFF3CD;--color-ok:#001D62;--color-ok-bg:#EAF0FB;--shadow-sm:0 1px 2px rgba(0,0,0,.06);--radius-md:7px;--radius-lg:9px;--radius-xl:12px;--font-body:Calibri,"Segoe UI",Arial,sans-serif}
+    [data-theme="dark"]{--color-bg:#12151c;--color-surface:#1b212f;--color-surface-2:#1b212f;--color-surface-offset:#232c42;--color-border:#333b4f;--color-text:#e7e9f0;--color-text-muted:#9aa3b8;--color-primary:#5b8fe0;--color-accent:#f9a703;--color-text-inverse:#0b1220;--color-warning:#ffd876;--color-warning-bg:#3a2e10;--color-ok:#8fc0ff;--color-ok-bg:#1c2b46}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:var(--font-body);font-size:var(--text-base);background:var(--color-bg);color:var(--color-text);line-height:1.5}
+    .app{max-width:1360px;margin:0 auto;padding:var(--space-6) var(--space-6) 8rem}
+    header.top{background:var(--color-primary);color:#fff;border-radius:var(--radius-xl);padding:26px 30px;margin-bottom:22px;box-shadow:0 6px 18px rgba(0,29,98,.18);break-inside:avoid;page-break-inside:avoid}
+    header.top .top-inner{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-4);flex-wrap:wrap}
+    header.top h1{margin:0 0 6px;font-size:22px;color:#fff}
+    header.top p.lead{margin:0;color:#CBD5E8;font-size:14px}
+    header.top .bar{height:4px;background:var(--color-accent);border-radius:2px;margin-top:16px}
+    .top-utils{display:flex;gap:8px;flex-wrap:wrap}
+    .util-btn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:.5rem .95rem;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+    .util-btn:hover{background:rgba(255,255,255,.26)}
+    .modal-overlay{position:fixed;inset:0;background:rgba(10,15,30,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+    .modal-overlay.show{display:flex}
+    .modal-box{background:var(--color-surface);border-radius:var(--radius-xl);max-width:620px;width:100%;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+    .modal-head{background:var(--color-primary);color:#fff;padding:20px 24px;position:relative}
+    .modal-head h3{margin:0 0 4px;font-size:18px}
+    .modal-head p{margin:0;font-size:13px;color:#CBD5E8}
+    .modal-head .bar{height:4px;background:var(--color-accent);border-radius:2px;margin-top:14px}
+    .modal-close{position:absolute;top:14px;right:16px;background:rgba(255,255,255,.16);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;line-height:1}
+    .modal-close:hover{background:rgba(255,255,255,.3)}
+    .modal-body{padding:20px 24px;overflow-y:auto;color:var(--color-text)}
+    .modal-body ol{margin:0;padding-left:1.2rem;display:grid;gap:12px}
+    .modal-body li strong{color:var(--color-primary)}
+    .modal-body .modal-note{background:var(--color-warning-bg);color:var(--color-warning);border-left:4px solid var(--color-accent);border-radius:var(--radius-md);padding:10px 12px;font-size:12.5px;margin-top:16px}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--space-6)}
+    .panel{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);padding:1.4rem 1.5rem;margin-bottom:var(--space-5);break-inside:avoid;page-break-inside:avoid}
+    .kpi,.subgrid>div,tr{break-inside:avoid;page-break-inside:avoid}
+    .panel h2{font-size:16px;color:var(--color-primary);margin:0 0 14px;padding-bottom:10px;border-bottom:3px solid var(--color-accent)}
+    .subgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}
+    .subgrid .full-row{grid-column:1 / -1}
+    label{display:block;font-size:12.5px;font-weight:700;color:var(--color-text-muted);margin-bottom:.35rem}
+    input,select,textarea{width:100%;font-family:inherit;padding:.8rem .9rem;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface-2);color:var(--color-text)}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px var(--color-surface-offset)}
+    textarea{min-height:84px;resize:vertical;white-space:pre-wrap}
+    table{width:100%;border-collapse:collapse;font-size:var(--text-sm)}
+    th,td{border:1px solid var(--color-border);padding:.65rem;vertical-align:top}
+    th{background:var(--color-surface-offset);color:var(--color-primary);text-align:left;font-weight:700}
+    #unitTable{table-layout:fixed}
+    #unitTable td textarea,#unitTable td input{width:100%}
+    #unitTable input[type=number],#weekTable input[type=number]{-moz-appearance:textfield;appearance:textfield;text-align:center;padding-right:.5rem}
+    #unitTable input[type=number]::-webkit-inner-spin-button,
+    #unitTable input[type=number]::-webkit-outer-spin-button,
+    #weekTable input[type=number]::-webkit-inner-spin-button,
+    #weekTable input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+    #unitTable td select{text-align:center;text-align-last:center}
+    #unitTable thead th:nth-child(n+4):nth-child(-n+9),
+    #unitTable tfoot tr:first-child th:nth-child(n+2):nth-child(-n+7){text-align:center}
+    #weekTable thead th:nth-child(4),
+    #weekTable thead th:nth-child(5),
+    #weekTable tfoot th:nth-child(2),
+    #weekTable tfoot th:nth-child(3){text-align:center}
+    .table-wrap{overflow:auto}
+    .summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-4);margin-top:var(--space-4)}
+    .kpi{padding:var(--space-4);border-radius:var(--radius-lg);background:var(--color-surface-offset);border:1px solid var(--color-border)}
+    .kpi .label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--color-text-muted)}
+    .kpi .value{font-size:var(--text-lg);font-weight:700;margin-top:.2rem;color:var(--color-primary)}
+    .alert{border-radius:var(--radius-lg);padding:var(--space-4);margin-bottom:var(--space-4);border-left:4px solid transparent}
+    .alert.warn{background:var(--color-warning-bg);color:var(--color-warning);border-left-color:var(--color-accent)}
+    .alert.ok{background:var(--color-ok-bg);color:var(--color-ok);border-left-color:var(--color-primary)}
+    .alert ul{margin:.4rem 0 0 1rem;padding:0}
+    .muted{color:var(--color-text-muted);font-size:var(--text-sm)}
+    .hint{font-size:var(--text-xs);color:var(--color-text-muted)}
+    .drag-handle{cursor:grab;font-weight:700;text-align:center}
+    .dragging{opacity:.5}
+    .drop-target{outline:2px dashed var(--color-primary)}
+    .lock-note{font-size:var(--text-xs);color:var(--color-text-muted)}
+    details{margin-top:var(--space-4)}
+    summary{cursor:pointer;font-weight:700;color:var(--color-primary)}
+    .actions{position:sticky;bottom:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;background:rgba(255,255,255,.92);backdrop-filter:blur(4px);padding:14px;border-radius:14px;box-shadow:0 6px 22px rgba(0,29,98,.18);border:1px solid var(--color-border);margin-top:20px}
+    [data-theme="dark"] .actions{background:rgba(27,33,47,.92)}
+    .btn{border:none;border-radius:var(--radius-lg);padding:12px 20px;font-size:13.5px;font-weight:700;cursor:pointer}
+    .btn-primary{background:var(--color-primary);color:#fff}
+    .btn-primary:hover{background:#0A2C7A}
+    .btn-ghost{background:var(--color-surface);color:var(--color-primary);border:1.5px solid var(--color-primary)}
+    .btn-ghost:hover{background:var(--color-surface-offset)}
+    .btn-example{background:var(--color-accent);color:#412402}
+    .btn-example:hover{background:#E39602}
+    .toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:var(--color-primary);color:#fff;padding:10px 20px;border-radius:8px;font-size:13.5px;box-shadow:0 6px 18px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .25s ease, top .25s ease;z-index:999;max-width:90vw;text-align:center}
+    .toast.show{opacity:1;top:26px}
+    @media (max-width:900px){.grid,.subgrid,.summary{grid-template-columns:1fr}.subgrid .full-row{grid-column:auto}}
+    @media print {
+      @page{size:A4 landscape;margin:10mm}
+      body{background:#fff}
+      .app{max-width:100%;padding:0}
+      header.top{box-shadow:none}
+      header.top .top-utils{display:none!important}
+      .actions{display:none!important}
+      .toast{display:none!important}
+      .modal-overlay{display:none!important}
+      .panel{box-shadow:none}
+      details{display:block!important}
+      details>*:not(summary){display:block!important}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div id="exportRoot">
+    <header class="top">
+      <div class="top-inner">
+        <div>
+          <h1>Analisis JP PJJ per Semester</h1>
+          <p class="lead">Memetakan alokasi jam pelajaran (JP) tiap topik/lingkup materi ke dalam kalender mingguan selama satu semester.</p>
+        </div>
+        <div class="top-utils">
+          <button type="button" class="util-btn" id="openGuide">📘 Panduan</button>
+          <a href="<?= baseUrl ?>" style="text-decoration:none"><button type="button" class="util-btn">← Beranda</button></a>
+          <button type="button" class="util-btn" data-theme-toggle>Mode Gelap/Terang</button>
+        </div>
+      </div>
+      <div class="bar"></div>
+    </header>
+    <div class="grid" id="gridTop">
+      <section class="panel">
+        <h2>Data Awal Semester</h2>
+        <div class="subgrid">
+          <div class="full-row"><label>Satuan Pendidikan</label><input id="school"></div>
+          <div><label>Mata Pelajaran</label><input id="subject" list="mapelList" placeholder="Pilih atau ketik nama mata pelajaran"></div>
+          <div><label>Nama Guru Pengampu</label><input id="teacher"></div>
+          <div><label>Fase/Kelas</label>
+            <select id="grade">
+              <option value="">— Pilih Fase/Kelas —</option>
+              <option value="Fase E / Kelas X">Fase E / Kelas X</option>
+              <option value="Fase F / Kelas XI">Fase F / Kelas XI</option>
+              <option value="Fase F / Kelas XII">Fase F / Kelas XII</option>
+            </select>
+          </div>
+          <div><label>Semester</label>
+            <select id="semester">
+              <option value="">— Pilih Semester —</option>
+              <option value="Ganjil">Ganjil</option>
+              <option value="Genap">Genap</option>
+            </select>
+          </div>
+          <div><label>Total JP Semester</label><input id="totalJP" type="number" min="0" value="72"></div>
+          <div><label>Jumlah Minggu Efektif</label><input id="weeks" type="number" min="1" value="18"></div>
+          <div><label>JP Intrakurikuler</label><input id="intraJP" type="number" min="0" value="54"></div>
+          <div><label>JP Kokurikuler</label><input id="coJP" type="number" min="0" value="18"></div>
+          <div><label>Proporsi Sinkron (%)</label><input id="syncPct" type="number" min="0" max="100" value="30"></div>
+          <div><label>Proporsi Asinkron (%)</label><input id="asyncPct" type="number" value="70" readonly></div>
+        </div>
+        <datalist id="mapelList">
+          <option value="Pendidikan Agama dan Budi Pekerti">
+          <option value="Pendidikan Pancasila">
+          <option value="Bahasa Indonesia">
+          <option value="Matematika">
+          <option value="Bahasa Inggris">
+          <option value="Pendidikan Jasmani, Olahraga, dan Kesehatan">
+          <option value="Sejarah">
+          <option value="Seni Budaya">
+          <option value="Muatan Lokal">
+          <option value="Fisika">
+          <option value="Kimia">
+          <option value="Biologi">
+          <option value="Sosiologi">
+          <option value="Ekonomi">
+          <option value="Geografi">
+          <option value="Antropologi">
+          <option value="Bahasa Arab">
+          <option value="Bahasa Mandarin">
+          <option value="Bahasa Jepang">
+          <option value="Bahasa Korea">
+          <option value="Bahasa Jerman">
+          <option value="Bahasa Prancis">
+          <option value="Informatika">
+          <option value="Prakarya dan Kewirausahaan">
+        </datalist>
+        <div class="summary" id="kpiSummary">
+          <div class="kpi"><div class="label">Target JP Sinkron</div><div class="value" id="syncTarget">0</div></div>
+          <div class="kpi"><div class="label">Target JP Asinkron</div><div class="value" id="asyncTarget">0</div></div>
+          <div class="kpi"><div class="label">Rata-rata Sinkron/Minggu</div><div class="value" id="avgSync">0</div></div>
+          <div class="kpi"><div class="label">Total Minggu Topik</div><div class="value" id="weekPlanStatus">0</div></div>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Pembagian Intra dan Kokurikuler</h2>
+        <p class="muted">Terisi otomatis dari Data Awal Semester.</p>
+        <div class="table-wrap"><table><thead><tr><th>Komponen</th><th>JP Semester</th><th>Target JP Sinkron</th><th>Target JP Asinkron</th></tr></thead><tbody><tr><td>Intrakurikuler</td><td id="autoIntraSem">0</td><td id="autoIntraSync">0</td><td id="autoIntraAsync">0</td></tr><tr><td>Kokurikuler</td><td id="autoCoSem">0</td><td id="autoCoSync">0</td><td id="autoCoAsync">0</td></tr></tbody></table></div>
+        <details id="panduanSkor"><summary>Lihat panduan skor kompleksitas</summary><div class="table-wrap" style="margin-top:var(--space-4)"><table><thead><tr><th>Skor</th><th>Karakter materi</th><th>Usulan % sinkron</th><th>Pola sinkron yang cocok</th></tr></thead><tbody><tr><td>1</td><td>Materi relatif prosedural, latihan rutin, dapat dipelajari mandiri.</td><td>15–20%</td><td>Tiga mingguan atau titik cek tertentu.</td></tr><tr><td>2</td><td>Materi menengah, perlu penjelasan terbimbing tetapi cukup banyak bagian mandiri.</td><td>25–30%</td><td>Dua mingguan.</td></tr><tr><td>3</td><td>Materi abstrak, miskonsepsi tinggi, perlu klarifikasi intensif dan problem solving bersama.</td><td>35–40%</td><td>Mingguan atau dua mingguan padat.</td></tr></tbody></table></div></details>
+      </section>
+    </div>
+
+    <section class="panel" id="panelUnitAnalysis" style="margin-top:var(--space-6)">
+      <h2>Analisis Topik/Lingkup Materi</h2>
+      <div id="unitAlert"></div>
+      <div class="table-wrap"><table id="unitTable">
+        <colgroup>
+          <col style="width:3%"><col style="width:32%"><col style="width:25%"><col style="width:6%"><col style="width:7%"><col style="width:9%"><col style="width:6%"><col style="width:6%"><col style="width:6%">
+        </colgroup>
+        <thead><tr><th>No</th><th>CP / TP</th><th>Topik/Lingkup Materi</th><th>JP Total</th><th>Jumlah Minggu</th><th>Skor Kompleksitas</th><th>% Sinkron</th><th>JP Sinkron</th><th>JP Asinkron</th></tr></thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr><th colspan="3">Total</th><th id="unitTotalJP">0</th><th id="unitTotalWeeks">0</th><th>-</th><th>-</th><th id="unitTotalSync">0</th><th id="unitTotalAsync">0</th></tr>
+          <tr><th colspan="9" id="unitStatus" style="text-align:left;font-weight:500">-</th></tr>
+        </tfoot>
+      </table></div>
+    </section>
+
+    <section class="panel" id="panelWeekCalendar" style="margin-top:var(--space-6)">
+      <h2>Kalender Sinkron dan Asinkron per Minggu</h2>
+      <div id="weekAlert"></div>
+      <p class="muted">Kalender dibuat dari tabel Analisis Topik/Lingkup Materi. Kolom JP mingguan dapat diubah, dan sistem akan mengecek totalnya per unit.</p>
+      <div class="table-wrap"><table id="weekTable"><thead><tr><th>↕</th><th>Minggu</th><th>Topik/Lingkup Materi</th><th>JP Sinkron</th><th>JP Asinkron</th><th>Aktivitas Sinkron</th><th>Aktivitas Asinkron</th></tr></thead><tbody></tbody><tfoot><tr><th colspan="3">Total</th><th id="weekSyncTotal">0</th><th id="weekAsyncTotal">0</th><th colspan="2" id="weekStatus">-</th></tr></tfoot></table></div>
+    </section>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="btn btn-ghost" id="openFileBtn">Buka File</button>
+    <button type="button" class="btn btn-ghost" id="saveFileBtn">Simpan sebagai File</button>
+    <button type="button" class="btn btn-ghost" id="resetBtn">Reset</button>
+    <button type="button" class="btn btn-example" id="fillDemo">Isi Contoh</button>
+    <button type="button" class="btn btn-ghost" id="addUnit">+ Tambah Topik</button>
+    <button type="button" class="btn btn-ghost" id="regenCalendar">Bangun/Ubah Kalender</button>
+    <button type="button" class="btn btn-ghost" id="exportToKalender">Kirim ke Kalender Jadwal</button>
+    <button type="button" class="btn btn-primary" id="exportDocx">🖨️ Ekspor Dok (.docx)</button>
+  </div>
+  <input type="file" id="stateFileInput" accept="application/json" style="display:none">
+</div>
+
+<div class="modal-overlay" id="guideModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <button type="button" class="modal-close" id="closeGuide">✕</button>
+      <h3>Panduan Singkat Pengisian</h3>
+      <p>Analisis JP PJJ per Semester — untuk Guru Sekolah Induk / Guru Sekolah Mitra</p>
+      <div class="bar"></div>
+    </div>
+    <div class="modal-body">
+      <ol>
+        <li><strong>Isi Data Awal Semester.</strong> Masukkan satuan pendidikan, mata pelajaran, nama guru pengampu, fase/kelas, semester, total JP semester, jumlah minggu efektif, JP intra/kokurikuler, dan proporsi sinkron (%). KPI di sebelah kanan akan terisi otomatis.</li>
+        <li><strong>Isi tabel Analisis Topik/Lingkup Materi.</strong> Tambahkan tiap topik lewat "+ Tambah Topik": isi CP/TP, nama topik, JP total, jumlah minggu, dan skor kompleksitas (lihat panduan skor di panel sebelah kiri).</li>
+        <li><strong>Periksa kotak peringatan.</strong> Jika total minggu atau target JP belum sesuai, kotak akan menampilkan rincian yang perlu diperbaiki. Kotak hijau berarti data sudah konsisten.</li>
+        <li><strong>Klik "Bangun/Ubah Kalender".</strong> Sistem otomatis membagi JP sinkron/asinkron tiap topik ke dalam minggu-minggu kalender. Anda bisa menggeser (drag) baris atau mengubah angka JP secara manual bila perlu.</li>
+        <li><strong>Data tersimpan otomatis.</strong> Setiap perubahan disimpan otomatis di perangkat ini. Gunakan "Simpan sebagai File" untuk menyimpan salinan atau memindahkannya ke perangkat lain, dan "Buka File" untuk memuatnya kembali.</li>
+        <li><strong>Kirim ke Kalender Jadwal.</strong> Setelah kalender mingguan selesai, klik "Kirim ke Kalender Jadwal" untuk mengunduh file yang bisa diimpor bagian kurikulum ke aplikasi Kalender Jadwal Multi-Mapel.</li>
+        <li><strong>Ekspor Word (.docx)</strong> untuk mengunduh seluruh analisis sebagai dokumen Word yang bisa diedit lebih lanjut.</li>
+        <li><strong>Ekspor PDF</strong> bila membutuhkan dokumen cetak resmi dari seluruh analisis ini — akan membuka jendela cetak browser, pilih tujuan "Simpan sebagai PDF".</li>
+      </ol>
+      <div class="modal-note">Tombol "Reset" akan mengosongkan seluruh isian termasuk data tersimpan otomatis — gunakan dengan hati-hati.</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const el=id=>document.getElementById(id), unitBody=document.querySelector('#unitTable tbody'), weekBody=document.querySelector('#weekTable tbody');
+const complexityRanges={1:[15,20],2:[25,30],3:[35,40]};
+const AUTOSAVE_KEY='pemetaanJP_autosave_v1';
+let currentTheme=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; document.documentElement.setAttribute('data-theme',currentTheme);
+document.querySelector('[data-theme-toggle]').addEventListener('click',()=>{currentTheme=currentTheme==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',currentTheme)});
+let suppressAutoCalendar=false;
+function showToast(msg){const t=el('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600);}
+function round(n){return Math.round(Number(n)||0)}
+
+/* ---------- Perhitungan inti ---------- */
+function autoIntraCo(){const intra=round(el('intraJP').value), co=round(el('coJP').value), syncPct=Number(el('syncPct').value||0); const intraSync=round(intra*syncPct/100), coSync=round(co*syncPct/100); el('autoIntraSem').textContent=intra; el('autoIntraSync').textContent=intraSync; el('autoIntraAsync').textContent=intra-intraSync; el('autoCoSem').textContent=co; el('autoCoSync').textContent=coSync; el('autoCoAsync').textContent=co-coSync;}
+function addUnitRow(data={}){const comp=data.comp||1, range=complexityRanges[comp], pct=data.pct ?? range[0]; const row=document.createElement('tr'); row.className='unit-row'; row.innerHTML=`<td class="row-no"></td><td><textarea class="unit-cp" placeholder="CP / TP">${data.cp||''}</textarea></td><td><input class="unit-name" value="${data.unit||''}" placeholder="Nama topik/lingkup materi"></td><td><input class="jp-total" type="number" min="0" value="${data.jp||0}"></td><td><input class="week-count" type="number" min="1" value="${data.wcount||1}"></td><td><select class="complexity"><option value="1" ${comp==1?'selected':''}>1</option><option value="2" ${comp==2?'selected':''}>2</option><option value="3" ${comp==3?'selected':''}>3</option></select><div class="hint range-hint"></div></td><td><input class="sync-pct" type="number" min="${range[0]}" max="${range[1]}" value="${pct}"></td><td><input class="sync-jp" type="number" value="0" readonly></td><td><input class="async-jp" type="number" value="0" readonly></td>`; unitBody.appendChild(row); row.querySelectorAll('input,select,textarea').forEach(i=>i.addEventListener('input',()=>{recalc(false); scheduleAutosave();})); updateRangeForRow(row); recalc(false); scheduleAutosave();}
+function updateRangeForRow(row){const comp=Number(row.querySelector('.complexity').value||1), pct=row.querySelector('.sync-pct'), hint=row.querySelector('.range-hint'); const [mn,mx]=complexityRanges[comp]; pct.min=mn; pct.max=mx; if(Number(pct.value)<mn) pct.value=mn; if(Number(pct.value)>mx) pct.value=mx; hint.textContent=`Rentang skor ${comp}: ${mn}–${mx}%`;}
+function getUnitModels(){return [...unitBody.querySelectorAll('tr.unit-row')].map((tr,idx)=>({index:idx+1, unit:tr.querySelector('.unit-name').value||'', cp:tr.querySelector('.unit-cp').value||'', jp:round(tr.querySelector('.jp-total').value), weeks:round(tr.querySelector('.week-count').value), sync:round(tr.querySelector('.sync-jp').value), async:round(tr.querySelector('.async-jp').value)}));}
+function getUnitRawModels(){return [...unitBody.querySelectorAll('tr.unit-row')].map(tr=>({unit:tr.querySelector('.unit-name').value||'', cp:tr.querySelector('.unit-cp').value||'', jp:round(tr.querySelector('.jp-total').value), wcount:round(tr.querySelector('.week-count').value), comp:Number(tr.querySelector('.complexity').value||1), pct:Number(tr.querySelector('.sync-pct').value||0)}));}
+function distribute(total,weeks){if(weeks<=0) return []; const base=Math.floor(total/weeks), rem=total%weeks, arr=[]; for(let i=0;i<weeks;i++) arr.push(base+(i<rem?1:0)); return arr;}
+function recalc(rebuildCalendar=false){autoIntraCo(); const totalJP=round(el('totalJP').value), weeks=round(el('weeks').value||1), syncPct=Number(el('syncPct').value||0); const asyncPct=Math.max(0,100-syncPct); el('asyncPct').value=asyncPct; const syncTarget=round(totalJP*syncPct/100), asyncTarget=round(totalJP*asyncPct/100); el('syncTarget').textContent=syncTarget; el('asyncTarget').textContent=asyncTarget; el('avgSync').textContent=(weeks?(syncTarget/weeks).toFixed(1):'0'); let totalUnitJP=0,totalWeeks=0,totalSync=0,totalAsync=0; [...unitBody.querySelectorAll('tr.unit-row')].forEach((tr,idx)=>{tr.querySelector('.row-no').textContent=idx+1; updateRangeForRow(tr); const jp=round(tr.querySelector('.jp-total').value), pct=Number(tr.querySelector('.sync-pct').value||0), wcount=round(tr.querySelector('.week-count').value); const sync=round(jp*pct/100), asy=jp-sync; tr.querySelector('.sync-jp').value=sync; tr.querySelector('.async-jp').value=asy; totalUnitJP+=jp; totalWeeks+=wcount; totalSync+=sync; totalAsync+=asy;}); el('unitTotalJP').textContent=totalUnitJP; el('unitTotalWeeks').textContent=totalWeeks; el('unitTotalSync').textContent=totalSync; el('unitTotalAsync').textContent=totalAsync; el('weekPlanStatus').textContent=`${totalWeeks}/${weeks}`; el('unitStatus').textContent=`Target sinkron ${syncTarget} | Selisih ${totalSync-syncTarget}`; renderUnitAlert(totalWeeks,weeks,totalSync,syncTarget,totalAsync,asyncTarget); if(rebuildCalendar && !suppressAutoCalendar) buildCalendarFromUnits(); else recalcWeekTotals();}
+function renderUnitAlert(totalWeeks,weeks,totalSync,syncTarget,totalAsync,asyncTarget){const problems=[]; if(totalSync!==syncTarget || totalAsync!==asyncTarget) problems.push(`Target JP belum sesuai: sinkron ${totalSync}/${syncTarget}, asinkron ${totalAsync}/${asyncTarget}.`); if(totalWeeks!==weeks) problems.push(`Total minggu topik/lingkup materi belum sesuai: ${totalWeeks}/${weeks}.`); el('unitAlert').innerHTML=problems.length?`<div class="alert warn"><strong>Peringatan analisis topik/lingkup materi</strong><ul>${problems.map(p=>`<li>${p}</li>`).join('')}</ul></div>`:`<div class="alert ok"><strong>Analisis topik/lingkup materi sudah konsisten.</strong></div>`;}
+
+/* ---------- Kalender mingguan ---------- */
+function buildCalendarFromUnits(){const totalWeeks=round(el('weeks').value); weekBody.innerHTML=''; let globalWeek=1; getUnitModels().forEach(model=>{const syncDist=distribute(model.sync,model.weeks), asyncDist=distribute(model.async,model.weeks); for(let i=0;i<model.weeks && globalWeek<=totalWeeks;i++,globalWeek++){const row=document.createElement('tr'); row.draggable=true; row.dataset.unit=model.unit; row.innerHTML=`<td class="drag-handle">☰</td><td class="week-no">${globalWeek}</td><td><textarea readonly>${model.unit}</textarea></td><td><input class="week-sync" type="number" min="0" value="${syncDist[i]||0}"></td><td><input class="week-async" type="number" min="0" value="${asyncDist[i]||0}"></td><td><textarea class="act-sync" placeholder="Aktivitas sinkron minggu ini"></textarea></td><td><textarea class="act-async" placeholder="Aktivitas asinkron minggu ini"></textarea></td>`; weekBody.appendChild(row);}}); while(globalWeek<=totalWeeks){const row=document.createElement('tr'); row.draggable=true; row.dataset.unit=''; row.innerHTML=`<td class="drag-handle">☰</td><td class="week-no">${globalWeek}</td><td><textarea readonly></textarea></td><td><input class="week-sync" type="number" min="0" value="0"></td><td><input class="week-async" type="number" min="0" value="0"></td><td><textarea class="act-sync"></textarea></td><td><textarea class="act-async"></textarea></td>`; weekBody.appendChild(row); globalWeek++;} bindWeekEvents(); attachDnD(); recalcWeekTotals(); scheduleAutosave();}
+function restoreWeekTable(savedWeeks){weekBody.innerHTML=''; (savedWeeks||[]).forEach((w,idx)=>{const row=document.createElement('tr'); row.draggable=true; row.dataset.unit=w.unit||''; row.innerHTML=`<td class="drag-handle">☰</td><td class="week-no">${idx+1}</td><td><textarea readonly>${w.unit||''}</textarea></td><td><input class="week-sync" type="number" min="0" value="${w.sync||0}"></td><td><input class="week-async" type="number" min="0" value="${w.async||0}"></td><td><textarea class="act-sync" placeholder="Aktivitas sinkron minggu ini">${w.actSync||''}</textarea></td><td><textarea class="act-async" placeholder="Aktivitas asinkron minggu ini">${w.actAsync||''}</textarea></td>`; weekBody.appendChild(row);}); bindWeekEvents(); attachDnD(); recalcWeekTotals();}
+function bindWeekEvents(){weekBody.querySelectorAll('.week-sync,.week-async,.act-sync,.act-async').forEach(i=>i.addEventListener('input',()=>{recalcWeekTotals(); scheduleAutosave();}));}
+function attachDnD(){let dragged=null; [...weekBody.querySelectorAll('tr')].forEach(row=>{row.addEventListener('dragstart',()=>{dragged=row; row.classList.add('dragging')}); row.addEventListener('dragend',()=>{row.classList.remove('dragging'); [...weekBody.querySelectorAll('tr')].forEach(r=>r.classList.remove('drop-target')); renumberWeeks(); recalcWeekTotals(); scheduleAutosave();}); row.addEventListener('dragover',e=>{e.preventDefault(); row.classList.add('drop-target')}); row.addEventListener('dragleave',()=>row.classList.remove('drop-target')); row.addEventListener('drop',e=>{e.preventDefault(); row.classList.remove('drop-target'); if(!dragged||dragged===row) return; const rows=[...weekBody.querySelectorAll('tr')], di=rows.indexOf(dragged), ti=rows.indexOf(row); if(di<ti) row.after(dragged); else row.before(dragged);});});}
+function renumberWeeks(){[...weekBody.querySelectorAll('tr')].forEach((tr,idx)=>tr.querySelector('.week-no').textContent=idx+1)}
+function recalcWeekTotals(){let ws=0,wa=0; const actualByUnit={}; [...weekBody.querySelectorAll('tr')].forEach(tr=>{const unit=tr.dataset.unit||''; const s=round(tr.querySelector('.week-sync').value), a=round(tr.querySelector('.week-async').value); ws+=s; wa+=a; if(!actualByUnit[unit]) actualByUnit[unit]={sync:0,async:0}; actualByUnit[unit].sync+=s; actualByUnit[unit].async+=a;}); const syncTarget=round(el('syncTarget').textContent), asyncTarget=round(el('asyncTarget').textContent); el('weekSyncTotal').textContent=ws; el('weekAsyncTotal').textContent=wa; el('weekStatus').textContent=`Target sinkron ${syncTarget} (selisih ${ws-syncTarget}) | Target asinkron ${asyncTarget} (selisih ${wa-asyncTarget})`; const problems=[]; getUnitModels().forEach(model=>{const actual=actualByUnit[model.unit]||{sync:0,async:0}; if(actual.sync!==model.sync || actual.async!==model.async) problems.push(`${model.unit||'(topik kosong)'}: sinkron ${actual.sync}/${model.sync}, asinkron ${actual.async}/${model.async}.`);}); el('weekAlert').innerHTML=problems.length?`<div class="alert warn"><strong>Peringatan kalender mingguan</strong><ul>${problems.map(p=>`<li>${p}</li>`).join('')}</ul></div>`:`<div class="alert ok"><strong>Distribusi JP kalender sudah sesuai dengan tabel Analisis Topik/Lingkup Materi.</strong></div>`;}
+
+/* ---------- Contoh & Reset ---------- */
+function fillDemo(){suppressAutoCalendar=true; el('school').value='SMAN 1 Ternate'; el('subject').value='Matematika'; el('teacher').value='Rina Puspitasari, S.Pd'; el('grade').value='Fase E / Kelas X'; el('semester').value='Ganjil'; el('totalJP').value=72; el('weeks').value=18; el('intraJP').value=54; el('coJP').value=18; el('syncPct').value=30; unitBody.innerHTML=''; addUnitRow({unit:'Eksponen & Barisan–Deret',cp:'Menggunakan sifat pangkat dan pola barisan.',jp:20,wcount:4,comp:3,pct:35}); addUnitRow({unit:'SPLTV & Pertidaksamaan',cp:'Memodelkan masalah ke SPLTV dan menyelesaikannya.',jp:18,wcount:4,comp:3,pct:35}); addUnitRow({unit:'Fungsi Kuadrat',cp:'Membaca grafik dan memodelkan konteks.',jp:18,wcount:5,comp:2,pct:25}); addUnitRow({unit:'Fungsi Eksponensial',cp:'Memodelkan pertumbuhan dan peluruhan.',jp:16,wcount:5,comp:2,pct:25}); suppressAutoCalendar=false; recalc(true); showToast('Contoh berhasil dimuat.');}
+function resetAll(){ if(!confirm('Kosongkan semua data dan mulai dari awal? Data tersimpan otomatis juga akan dihapus.')) return; try{localStorage.removeItem(AUTOSAVE_KEY);}catch(e){} ['school','subject','teacher','grade','semester'].forEach(id=>el(id).value=''); el('totalJP').value=72; el('weeks').value=18; el('intraJP').value=54; el('coJP').value=18; el('syncPct').value=30; unitBody.innerHTML=''; weekBody.innerHTML=''; addUnitRow(); addUnitRow(); addUnitRow(); recalc(false); showToast('Formulir dikosongkan kembali.'); }
+
+/* ---------- Simpan & buka file (Opsi A) + Autosave (Opsi B) ---------- */
+function collectState(){ return { type:'pemetaan-state', version:1, school:el('school').value, subject:el('subject').value, teacher:el('teacher').value, grade:el('grade').value, semester:el('semester').value, totalJP:el('totalJP').value, weeks:el('weeks').value, intraJP:el('intraJP').value, coJP:el('coJP').value, syncPct:el('syncPct').value, units:getUnitRawModels(), weeks_calendar:[...weekBody.querySelectorAll('tr')].map(tr=>({unit:tr.dataset.unit||'', sync:round(tr.querySelector('.week-sync').value), async:round(tr.querySelector('.week-async').value), actSync:tr.querySelector('.act-sync').value, actAsync:tr.querySelector('.act-async').value})) }; }
+function applyState(state){ suppressAutoCalendar=true; el('school').value=state.school||''; el('subject').value=state.subject||''; el('teacher').value=state.teacher||''; el('grade').value=state.grade||''; el('semester').value=state.semester||''; el('totalJP').value=state.totalJP||0; el('weeks').value=state.weeks||1; el('intraJP').value=state.intraJP||0; el('coJP').value=state.coJP||0; el('syncPct').value=state.syncPct||0; unitBody.innerHTML=''; (state.units||[]).forEach(u=>addUnitRow(u)); recalc(false); restoreWeekTable(state.weeks_calendar||[]); suppressAutoCalendar=false; }
+let autosaveTimer=null;
+function scheduleAutosave(){ clearTimeout(autosaveTimer); autosaveTimer=setTimeout(()=>{ try{ localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(collectState())); }catch(e){ console.warn('Autosave gagal', e); } },600); }
+function tryRestoreAutosave(){ try{ const raw=localStorage.getItem(AUTOSAVE_KEY); if(!raw) return false; const state=JSON.parse(raw); if(state && state.type==='pemetaan-state'){ applyState(state); showToast('Data tersimpan sebelumnya dimuat otomatis.'); return true; } }catch(e){ console.warn('Gagal memuat autosave', e); } return false; }
+function saveToFile(){ const state=collectState(); const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); const subj=(state.subject||'pemetaan').replace(/\s+/g,'-').toLowerCase(); const sem=(state.semester||'semester').replace(/\s+/g,'-').toLowerCase(); a.download=`pemetaan-jp-${subj}-${sem}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); showToast('Data berhasil disimpan sebagai file.'); }
+function openFromFile(file){ const reader=new FileReader(); reader.onload=()=>{ try{ const state=JSON.parse(reader.result); if(!state || state.type!=='pemetaan-state'){ showToast('File tidak dikenali sebagai data Pemetaan JP.'); return; } applyState(state); scheduleAutosave(); showToast('Data berhasil dimuat dari file.'); }catch(e){ console.error(e); showToast('Gagal membaca file: format tidak valid.'); } }; reader.readAsText(file); }
+
+/* ---------- Kirim ke Kalender Jadwal ---------- */
+function exportToKalender(){
+  const subject=el('subject').value.trim();
+  const teacher=el('teacher').value.trim();
+  if(!subject){ showToast('Isi Mata Pelajaran terlebih dahulu sebelum mengirim ke Kalender.'); return; }
+  const rows=[...weekBody.querySelectorAll('tr')].map((tr,idx)=>({ week:idx+1, unit:tr.dataset.unit || (tr.querySelector('textarea[readonly]')?tr.querySelector('textarea[readonly]').value:'') || '', sync:round(tr.querySelector('.week-sync').value), async:round(tr.querySelector('.week-async').value) })).filter(r=>r.unit || r.sync || r.async);
+  if(!rows.length){ showToast('Bangun kalender terlebih dahulu sebelum mengirim ke Kalender Jadwal.'); return; }
+  const payload={type:'pemetaan-to-kalender', version:1, subject, teacher, rows};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`kirim-ke-kalender-${subject.replace(/\s+/g,'-').toLowerCase()}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  showToast('File untuk Kalender Jadwal berhasil diunduh. Impor file ini di aplikasi Kalender Jadwal Multi-Mapel.');
+}
+
+/* ---------- Ekspor Word (.docx) ---------- */
+function xmlEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
+function xRun(text, opts){
+  opts = opts || {};
+  let rpr = '<w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>';
+  if(opts.bold) rpr += '<w:b/>';
+  if(opts.color) rpr += `<w:color w:val="${opts.color}"/>`;
+  rpr += `<w:sz w:val="${opts.size||20}"/><w:szCs w:val="${opts.size||20}"/></w:rPr>`;
+  return `<w:r>${rpr}<w:t xml:space="preserve">${xmlEsc(text)}</w:t></w:r>`;
+}
+function xPara(content, opts){
+  opts = opts || {};
+  let pprInner = `<w:spacing w:before="${opts.before||0}" w:after="${opts.after!==undefined?opts.after:120}" w:line="280" w:lineRule="auto"/>`;
+  if(opts.borderBottom) pprInner += `<w:pBdr><w:bottom w:val="single" w:sz="12" w:space="4" w:color="F9A703"/></w:pBdr>`;
+  if(opts.align) pprInner += `<w:jc w:val="${opts.align}"/>`;
+  const ppr = `<w:pPr>${pprInner}</w:pPr>`;
+  let runs;
+  if(Array.isArray(content)) runs = content.map(r => typeof r==='string' ? xRun(r,opts) : xRun(r.text, r)).join('');
+  else runs = xRun(content, opts);
+  return `<w:p>${ppr}${runs}</w:p>`;
+}
+function xMultiPara(text, opts){
+  opts = opts || {};
+  const lines = String(text||'').split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+  if(lines.length===0) return xPara('\u2014', opts);
+  return lines.map(l=>xPara(l, opts)).join('');
+}
+function xCell(innerXml, opts){
+  opts = opts || {};
+  
+  let tcPr = `<w:tcW w:w="${opts.width || 1200}" w:type="dxa"/>`;
+  if(opts.gridSpan) tcPr += `<w:gridSpan w:val="${opts.gridSpan}"/>`;
+  if(opts.fill) tcPr += `<w:shd w:val="clear" w:color="auto" w:fill="${opts.fill}"/>`;
+  tcPr += '<w:vAlign w:val="center"/>';
+
+  let finalContent = innerXml;
+  if (!innerXml.includes('<w:p')) {
+    const alignXml = opts.align ? `<w:jc w:val="${opts.align}"/>` : '';
+    const boldXml = opts.bold ? '<w:b/>' : '';
+    const colorXml = opts.color ? `<w:color w:val="${opts.color}"/>` : '';
+
+    // Diselaraskan: ditambahkan <w:spacing w:after="0"/> dan ukuran font <w:sz w:val="19"/>
+    finalContent = `
+      <w:p>
+        <w:pPr>
+          ${alignXml}
+          <w:spacing w:after="0"/>
+        </w:pPr>
+        <w:r>
+          <w:rPr>${boldXml}${colorXml}<w:sz w:val="19"/></w:rPr>
+          <w:t xml:space="preserve">${innerXml}</w:t>
+        </w:r>
+      </w:p>`;
+  }
+
+  return `<w:tc><w:tcPr>${tcPr}</w:tcPr>${finalContent}</w:tc>`;
+}
+// Helper untuk membuat Sel Header (dengan background/style header)
+function headerCell(text, width, opts = {}) {
+  const alignXml = opts.align ? `<w:jc w:val="${opts.align}"/>` : '';
+  const spanXml = opts.gridSpan ? `<w:gridSpan w:val="${opts.gridSpan}"/>` : '';
+  const boldXml = opts.bold !== false ? '<w:b/>' : '';
+
+  return `<w:tc>
+    <w:tcPr>
+      <w:tcW w:w="${width}" w:type="dxa"/>
+      ${spanXml}
+      <w:shd w:val="clear" w:color="auto" w:fill="1B365D"/> <!-- Warna background header (misal: biru) -->
+      <w:vAlign w:val="center"/>
+    </w:tcPr>
+    <w:p>
+      <w:pPr>${alignXml}</w:pPr>
+      <w:r>
+        <w:rPr>
+          ${boldXml}
+          <w:color w:val="FFFFFF"/> <!-- Warna teks header (putih) -->
+          <w:sz w:val="18"/>
+        </w:rPr>
+        <w:t xml:space="preserve">${text}</w:t>
+      </w:r>
+    </w:p>
+  </w:tc>`;
+}
+// Helper untuk Sel Teks Biasa
+function bodyCellText(text, width, opts){ 
+  opts = opts || {};
+  // Teruskan seluruh atribut 'opts' ke xCell agar opsi seperti fill/gridSpan tetap terbaca
+  return xCell(
+    xPara(text, Object.assign({ size: 19, after: 0 }, opts)), 
+    Object.assign({ width: width }, opts)
+  ); 
+}
+function xRow(cellsXml, isHeader = false){
+  // <w:tblHeader/> memberi tahu Word untuk mengulang baris ini di halaman berikutnya
+  // <w:cantSplit/> mencegah baris terpotong di batas halaman (opsional tapi disarankan)
+  const headerProp = isHeader ? '<w:tblHeader/>' : '';
+  
+  return `<w:tr>
+    <w:trPr>
+      ${headerProp}
+      <w:cantSplit/>
+    </w:trPr>
+    ${cellsXml}
+  </w:tr>`;
+}
+function xTable(rowsXml, colWidths){
+  colWidths = colWidths || [14678];
+  const totalWidth = colWidths.reduce((a,b)=>a+b,0);
+  const gridXml = '<w:tblGrid>' + colWidths.map(w=>`<w:gridCol w:w="${w}"/>`).join('') + '</w:tblGrid>';
+  return `<w:tbl><w:tblPr><w:tblW w:w="${totalWidth}" w:type="dxa"/><w:tblBorders>
+    <w:top w:val="single" w:sz="4" w:color="999999"/><w:left w:val="single" w:sz="4" w:color="999999"/>
+    <w:bottom w:val="single" w:sz="4" w:color="999999"/><w:right w:val="single" w:sz="4" w:color="999999"/>
+    <w:insideH w:val="single" w:sz="4" w:color="999999"/><w:insideV w:val="single" w:sz="4" w:color="999999"/>
+    </w:tblBorders>
+    <w:tblCellMar>
+      <w:top w:w="60" w:type="dxa"/>
+      <w:left w:w="90" w:type="dxa"/>
+      <w:bottom w:w="60" w:type="dxa"/>
+      <w:right w:w="90" w:type="dxa"/>
+    </w:tblCellMar>
+    <w:tblLayout w:type="fixed"/></w:tblPr>${gridXml}${rowsXml}</w:tbl>`;
+}
+function headerCell(text, width, opts){ return xCell(xPara(text,Object.assign({bold:true,color:'FFFFFF',size:19,after:0},opts||{})), {width, fill:'001D62'}); }
+function bodyCell(xmlContent, width){ return xCell(xmlContent, {width}); }
+function bodyCellText(text, width, opts){ return xCell(xPara(text,Object.assign({size:19,after:0},opts||{})), {width}); }
+
+function buildIdentityDocxTable(){
+  const fields = [
+    ['Satuan Pendidikan','school'],['Mata Pelajaran','subject'],['Nama Guru Pengampu','teacher'],
+    ['Fase/Kelas','grade'],['Semester','semester'],['Total JP Semester','totalJP'],
+    ['Jumlah Minggu Efektif','weeks'],['JP Intrakurikuler','intraJP'],['JP Kokurikuler','coJP'],
+    ['Proporsi Sinkron (%)','syncPct'],['Proporsi Asinkron (%)','asyncPct'],
+  ];
+  const rows = fields.map(([label,id])=>{
+    const val = el(id).value || '\u2014';
+    return xRow(headerCell(label,2820) + bodyCell(xPara(val,{size:19,after:0}), 4536));
+  }).join('');
+  return xTable(rows, [2820,4536]);
+}
+function buildKpiDocxTable(){
+  const items = [
+    ['Target JP Sinkron', el('syncTarget').textContent],
+    ['Target JP Asinkron', el('asyncTarget').textContent],
+    ['Rata-rata Sinkron/Minggu', el('avgSync').textContent],
+    ['Total Minggu Topik', el('weekPlanStatus').textContent],
+  ];
+  const headerRow = xRow(items.map(([label])=>headerCell(label,3670,{align:'center'})).join(''));
+  const valueRow = xRow(items.map(([,val])=>bodyCellText(val,3670,{bold:true,color:'001D62',size:22, align:'center'})).join(''));
+  return xTable(headerRow+valueRow, [3670,3670,3669,3669]);
+}
+function buildIntraKoDocxTable(){
+  const headerRow = xRow(headerCell('Komponen',3670,{align:'center'})+headerCell('JP Semester',3670,{align:'center'})+headerCell('Target JP Sinkron',3669,{align:'center'})+headerCell('Target JP Asinkron',3669,{align:'center'}));
+  const rows = [
+    ['Intrakurikuler', el('autoIntraSem').textContent, el('autoIntraSync').textContent, el('autoIntraAsync').textContent],
+    ['Kokurikuler', el('autoCoSem').textContent, el('autoCoSync').textContent, el('autoCoAsync').textContent],
+  ].map(r=>xRow(bodyCellText(r[0],3670, { align: 'left', indent: 144, paddingLeft: 144 })+bodyCellText(r[1],3670,{align:'center'})+bodyCellText(r[2],3669,{align:'center'})+bodyCellText(r[3],3669,{align:'center'}))).join('');
+  return xTable(headerRow+rows, [3670,3670,3669,3669]);
+}
+function buildPanduanSkorDocxTable(){
+  const headerRow = xRow(headerCell('Skor',567,{align:'center'})+headerCell('Karakter Materi',6588,{align:'center'})+headerCell('Usulan % Sinkron',2602,{align:'center'})+headerCell('Pola Sinkron yang Cocok',4921,{align:'center'}));
+  const data = [
+    ['1','Materi relatif prosedural, latihan rutin, dapat dipelajari mandiri.','15\u201320%','Tiga mingguan atau titik cek tertentu.'],
+    ['2','Materi menengah, perlu penjelasan terbimbing tetapi cukup banyak bagian mandiri.','25\u201330%','Dua mingguan.'],
+    ['3','Materi abstrak, miskonsepsi tinggi, perlu klarifikasi intensif dan problem solving bersama.','35\u201340%','Mingguan atau dua mingguan padat.'],
+  ];
+  const rows = data.map(r=>xRow(bodyCellText(r[0],567,{align:'center'})+bodyCell(xMultiPara(r[1],{size:18,after:0}),6588)+bodyCellText(r[2],2602,{align:'center'})+bodyCell(xMultiPara(r[3],{size:18,after:0}),4921))).join('');
+  return xTable(headerRow+rows, [567,6588,2602,4921]);
+}
+function buildUnitDocxTable(){
+  const widths=[567,4921,3021,1018,1018,1318,1018,818,918];
+  const headers=['No','CP / TP','Topik/Lingkup Materi','JP Total','Jumlah Minggu','Skor Kompleksitas','% Sinkron','JP Sinkron','JP Asinkron'];
+  
+  // 1. Jangan lupa berikan `true` pada headerRow jika ingin diulang di halaman baru
+  const headerRow = xRow(headers.map((h,i)=>headerCell(h,widths[i],{align:'center'})).join(''), true);
+
+  const rows = [...unitBody.querySelectorAll('tr.unit-row')].map((tr,idx)=>{
+    const vals = [
+      String(idx+1),
+      tr.querySelector('.unit-cp').value||'\u2014',
+      tr.querySelector('.unit-name').value||'\u2014',
+      tr.querySelector('.jp-total').value||'0',
+      tr.querySelector('.week-count').value||'0',
+      tr.querySelector('.complexity').value||'1',
+      tr.querySelector('.sync-pct').value||'0',
+      tr.querySelector('.sync-jp').value||'0',
+      tr.querySelector('.async-jp').value||'0',
+    ];
+    return xRow(vals.map((v,i)=>{
+      if(i===1||i===2) return bodyCell(xMultiPara(v,{size:18,after:0}),widths[i]);
+      if(i>=3 ||i===0) return bodyCellText(v,widths[i],{align:'center'});
+      return bodyCellText(v,widths[i]);
+    }).join(''));
+  }).join('');
+
+  // BARIS TOTAL (Merge Kolom 1, 2, 3)
+  const mergedWidth = widths[0] + widths[1] + widths[2]; // 567 + 4921 + 3021 = 8509
+  const mergedWidth2 = widths[5] + widths[6];
+
+  const totalRow = xRow(
+    xCell('Total', { width: mergedWidth, gridSpan: 3, bold: true, align: 'center', fill: 'F2F2F2' }) +
+    xCell(el('unitTotalJP').textContent, { width: widths[3], bold: true, align: 'center' }) + 
+    xCell(el('unitTotalWeeks').textContent, { width: widths[4], bold: true, align: 'center' }) +
+    xCell(' ', { width: mergedWidth2, gridSpan: 2, bold: true, align: 'center', fill: 'F2F2F2' }) +
+    xCell(el('unitTotalSync').textContent, { width: widths[7], bold: true, align: 'center' }) +
+    xCell(el('unitTotalAsync').textContent, { width: widths[8], bold: true, align: 'center' })
+  );
+
+  return xTable(headerRow + rows + totalRow, widths);
+}
+
+function buildWeekDocxTable(){
+  const widths=[851,4252,1134,1134,3686,3544];
+  const headers=['Minggu','Topik/Lingkup Materi','JP Sinkron','JP Asinkron','Aktivitas Sinkron','Aktivitas Asinkron'];
+  const headerRow = xRow(headers.map((h,i)=>headerCell(h,widths[i],{align:'center'})).join(''), true);
+  const rows = [...weekBody.querySelectorAll('tr')].map(tr=>{
+    const vals = [
+      tr.querySelector('.week-no').textContent||'-',
+      (tr.querySelector('textarea[readonly]')?tr.querySelector('textarea[readonly]').value:'')||'\u2014',
+      tr.querySelector('.week-sync').value||'0',
+      tr.querySelector('.week-async').value||'0',
+      tr.querySelector('.act-sync').value||'',
+      tr.querySelector('.act-async').value||'',
+    ];
+    return xRow(vals.map((v,i)=>{
+      if(i===1||i===4||i===5) return bodyCell(xMultiPara(v,{size:18,after:0}),widths[i]);
+      if(i===0||i===2||i===3) return bodyCellText(v,widths[i],{align:'center'});
+      return bodyCellText(v,widths[i]);
+    }).join(''));
+  }).join('');
+  
+  const mergedWidth = widths[0] + widths[1];
+  const mergedWidth2 = widths[4] + widths[5];
+
+  const totalRow = xRow(
+    xCell('Total', { width: mergedWidth, gridSpan: 2, bold: true, align: 'center', fill: 'F2F2F2' }) +
+    bodyCellText(el('weekSyncTotal').textContent,widths[2],{bold:true,align:'center'}) +
+    bodyCellText(el('weekAsyncTotal').textContent,widths[3],{bold:true,align:'center'}) +
+    xCell('', { width: mergedWidth2, gridSpan: 2, bold: true, align: 'center', fill: 'F2F2F2' })
+  );
+  return xTable(headerRow+rows+totalRow, widths);
+}
+
+async function exportDocx(){
+  if(typeof JSZip === 'undefined'){ showToast('Gagal memuat pustaka JSZip. Periksa koneksi internet.'); return; }
+  const btn=el('exportDocx'); const originalLabel=btn.textContent; btn.textContent='Menyiapkan Word…'; btn.disabled=true;
+
+  try{
+    const title = xPara('Analisis JP PJJ per Semester', {bold:true,color:'001D62',size:32,after:40,borderBottom:true});
+    const subtitle = xPara('Memetakan alokasi jam pelajaran (JP) tiap topik/lingkup materi ke dalam kalender mingguan selama satu semester.', {color:'555555',size:20,after:200});
+
+    const hIdentity = xPara('A. Data Awal Semester', {bold:true,color:'001D62',size:24,before:160,after:80,borderBottom:true});
+    const identityTable = buildIdentityDocxTable();
+
+    const hKpi = xPara('Ringkasan Target JP', {bold:true,color:'001D62',size:22,before:200,after:80});
+    const kpiTable = buildKpiDocxTable();
+
+    const hIntraKo = xPara('B. Pembagian Intra dan Kokurikuler', {bold:true,color:'001D62',size:24,before:200,after:80,borderBottom:true});
+    const intraKoTable = buildIntraKoDocxTable();
+
+    const hPanduan = xPara('C. Panduan Skor Kompleksitas', {bold:true,color:'001D62',size:24,before:200,after:80,borderBottom:true});
+    const panduanTable = buildPanduanSkorDocxTable();
+
+    const hUnit = xPara('D. Analisis Topik/Lingkup Materi', {bold:true,color:'001D62',size:24,before:200,after:80,borderBottom:true});
+    const unitTableXml = buildUnitDocxTable();
+
+    const hWeek = xPara('E. Kalender Sinkron dan Asinkron per Minggu', {bold:true,color:'001D62',size:24,before:200,after:80,borderBottom:true});
+    const weekTableXml = buildWeekDocxTable();
+
+    const sectPr = `<w:sectPr><w:headerReference w:type="default" r:id="rIdHdr"/><w:footerReference w:type="default" r:id="rIdFtr"/><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/><w:pgMar w:top="1080" w:right="1080" w:bottom="1080" w:left="1080" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr>`;
+
+    const bodyXml = title + subtitle
+      + hIdentity + identityTable
+      + hKpi + kpiTable
+      + hIntraKo + intraKoTable
+      + hPanduan + panduanTable
+      + hUnit + unitTableXml
+      + hWeek + weekTableXml
+      + sectPr;
+
+    const HEADER_TEXT = 'Analisis JP PJJ per Semester';
+    const XML_DECL = '<' + '?xml version="1.0" encoding="UTF-8" standalone="yes"?' + '>';
+
+    const headerXml = `${XML_DECL}
+<w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="8" w:space="4" w:color="F9A703"/></w:pBdr></w:pPr>
+<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:i/><w:iCs/><w:color w:val="001D62"/><w:sz w:val="16"/><w:szCs w:val="16"/></w:rPr><w:t xml:space="preserve">${xmlEsc(HEADER_TEXT)}</w:t></w:r>
+</w:p>
+</w:hdr>`;
+
+    const footerXml = `${XML_DECL}
+<w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:p><w:pPr><w:jc w:val="center"/></w:pPr>
+<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:color w:val="001D62"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">Halaman </w:t></w:r>
+<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:color w:val="001D62"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r>
+<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:color w:val="001D62"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r>
+<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:color w:val="001D62"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:fldChar w:fldCharType="separate"/></w:r>
+<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:color w:val="001D62"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t>1</w:t></w:r>
+<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:color w:val="001D62"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:fldChar w:fldCharType="end"/></w:r>
+<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:color w:val="001D62"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve"> dari </w:t></w:r>
+<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:color w:val="001D62"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r>
+<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:color w:val="001D62"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:instrText xml:space="preserve"> NUMPAGES </w:instrText></w:r>
+<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:color w:val="001D62"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:fldChar w:fldCharType="separate"/></w:r>
+<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:color w:val="001D62"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t>1</w:t></w:r>
+<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:color w:val="001D62"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:fldChar w:fldCharType="end"/></w:r>
+</w:p>
+</w:ftr>`;
+
+    const documentXml = `${XML_DECL}
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<w:body>${bodyXml}</w:body>
+</w:document>`;
+
+    const contentTypesXml = `${XML_DECL}
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+<Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>
+<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>
+</Types>`;
+
+    const relsXml = `${XML_DECL}
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`;
+
+    const docRelsXml = `${XML_DECL}
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+<Relationship Id="rIdHdr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/>
+<Relationship Id="rIdFtr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>
+</Relationships>`;
+
+    const stylesXml = `${XML_DECL}
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="20"/></w:rPr></w:rPrDefault></w:docDefaults>
+<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>
+</w:styles>`;
+
+    const zip = new JSZip();
+    zip.file('[Content_Types].xml', contentTypesXml);
+    zip.folder('_rels').file('.rels', relsXml);
+    const wordFolder = zip.folder('word');
+    wordFolder.file('document.xml', documentXml);
+    wordFolder.file('styles.xml', stylesXml);
+    wordFolder.file('header1.xml', headerXml);
+    wordFolder.file('footer1.xml', footerXml);
+    wordFolder.folder('_rels').file('document.xml.rels', docRelsXml);
+
+    const blob = await zip.generateAsync({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    const subject=(el('subject').value||'pemetaan').replace(/[^a-z0-9]+/gi,'_');
+    const semester=(el('semester').value||'semester').replace(/[^a-z0-9]+/gi,'_');
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Analisis_JP_${subject}_${semester}.docx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('File Word (.docx) berhasil diunduh.');
+  }catch(err){
+    console.error(err);
+    showToast('Terjadi kesalahan saat membuat file .docx.');
+  }finally{
+    btn.textContent=originalLabel; btn.disabled=false;
+  }
+}
+
+/* ---------- Panduan (modal) ---------- */
+function openGuide(){ el('guideModal').classList.add('show'); }
+function closeGuide(){ el('guideModal').classList.remove('show'); }
+document.getElementById('openGuide').addEventListener('click', openGuide);
+document.getElementById('closeGuide').addEventListener('click', closeGuide);
+document.getElementById('guideModal').addEventListener('click',(e)=>{ if(e.target.id==='guideModal') closeGuide(); });
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeGuide(); });
+
+/* ---------- Wiring ---------- */
+document.getElementById('addUnit').addEventListener('click',()=>addUnitRow());
+document.getElementById('fillDemo').addEventListener('click',fillDemo);
+document.getElementById('regenCalendar').addEventListener('click',()=>{recalc(true); showToast('Kalender berhasil dibangun.');});
+document.getElementById('exportDocx').addEventListener('click',exportDocx);
+document.getElementById('resetBtn').addEventListener('click',resetAll);
+document.getElementById('saveFileBtn').addEventListener('click',saveToFile);
+document.getElementById('exportToKalender').addEventListener('click',exportToKalender);
+document.getElementById('openFileBtn').addEventListener('click',()=>el('stateFileInput').click());
+document.getElementById('stateFileInput').addEventListener('change',(e)=>{ const f=e.target.files[0]; if(f) openFromFile(f); e.target.value=''; });
+['school','subject','teacher','grade','semester'].forEach(id=>{el(id).addEventListener('input',scheduleAutosave); el(id).addEventListener('change',scheduleAutosave);});
+['totalJP','weeks','syncPct','intraJP','coJP'].forEach(id=>el(id).addEventListener('input',()=>{recalc(false); scheduleAutosave();}));
+
+if(!tryRestoreAutosave()){ addUnitRow(); addUnitRow(); addUnitRow(); recalc(false); }
+</script>
+</body>
+</html>
